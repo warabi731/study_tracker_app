@@ -1,0 +1,993 @@
+openapi: 3.0.0
+info:
+  title: Study Tracker API
+  description: 学習記録管理アプリケーションのバックエンドAPI
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: 開発環境
+  - url: https://api.example.com
+    description: 本番環境
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_id
+      description: サーバーサイドセッションによる認証（Cookie経由）
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: ユーザーID
+        name:
+          type: string
+          maxLength: 256
+          description: ハンドルネーム
+        email:
+          type: string
+          format: email
+          maxLength: 256
+          description: メールアドレス
+        description:
+          type: string
+          nullable: true
+          description: 自己紹介文
+        icon_url:
+          type: string
+          maxLength: 256
+          nullable: true
+          description: アイコン画像のURL
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+      required:
+        - id
+        - name
+        - email
+
+    UserSignUp:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 256
+          description: ハンドルネーム
+        email:
+          type: string
+          format: email
+          maxLength: 256
+          description: メールアドレス
+        password:
+          type: string
+          description: パスワード
+        description:
+          type: string
+          nullable: true
+          description: 自己紹介文
+      required:
+        - name
+        - email
+        - password
+
+    UserSignIn:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+        password:
+          type: string
+          description: パスワード
+      required:
+        - email
+        - password
+
+    Theme:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: テーマID
+        user_id:
+          type: integer
+          format: uint
+          description: ユーザーID
+        title:
+          type: string
+          maxLength: 256
+          description: 学習テーマ名
+        description:
+          type: string
+          nullable: true
+          description: テーマの説明
+        goal_time:
+          type: integer
+          format: uint
+          description: 目標学習時間（分単位）
+        theme_color:
+          type: string
+          enum:
+            - red
+            - blue
+            - green
+            - yellow
+            - purple
+            - orange
+          nullable: true
+          description: テーマカラー
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+      required:
+        - id
+        - user_id
+        - title
+        - goal_time
+
+    ThemeCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 256
+          description: 学習テーマ名
+        description:
+          type: string
+          nullable: true
+          description: テーマの説明
+        goal_time:
+          type: integer
+          format: uint
+          description: 目標学習時間（分単位）
+        theme_color:
+          type: string
+          enum:
+            - red
+            - blue
+            - green
+            - yellow
+            - purple
+            - orange
+          nullable: true
+          description: テーマカラー
+      required:
+        - title
+        - goal_time
+
+    ThemeUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 256
+          description: 学習テーマ名
+        description:
+          type: string
+          nullable: true
+          description: テーマの説明
+        goal_time:
+          type: integer
+          format: uint
+          description: 目標学習時間（分単位）
+        theme_color:
+          type: string
+          enum:
+            - red
+            - blue
+            - green
+            - yellow
+            - purple
+            - orange
+          nullable: true
+          description: テーマカラー
+
+    StudyRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: 学習記録ID
+        theme_id:
+          type: integer
+          format: uint
+          description: テーマID
+        user_id:
+          type: integer
+          format: uint
+          description: ユーザーID
+        record_date:
+          type: string
+          format: date
+          description: 対象日付
+        study_time:
+          type: integer
+          format: uint
+          description: 学習時間（分単位）
+        comment:
+          type: string
+          nullable: true
+          description: コメント
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+      required:
+        - id
+        - theme_id
+        - user_id
+        - record_date
+        - study_time
+
+    StudyRecordCreate:
+      type: object
+      properties:
+        record_date:
+          type: string
+          format: date
+          description: 対象日付
+        study_time:
+          type: integer
+          format: uint
+          description: 学習時間（分単位）
+        comment:
+          type: string
+          nullable: true
+          description: コメント
+      required:
+        - record_date
+        - study_time
+
+    Goal:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: 目標ID
+        theme_id:
+          type: integer
+          format: uint
+          description: テーマID
+        user_id:
+          type: integer
+          format: uint
+          description: ユーザーID
+        title:
+          type: string
+          maxLength: 256
+          description: 目標名
+        description:
+          type: string
+          nullable: true
+          description: 説明
+        deadline:
+          type: string
+          format: date
+          nullable: true
+          description: 期限
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+            - terminated
+          description: 進捗状況
+        completion_date:
+          type: string
+          format: date
+          nullable: true
+          description: 完了日
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+      required:
+        - id
+        - theme_id
+        - user_id
+        - title
+        - status
+
+    GoalCreate:
+      type: object
+      properties:
+        theme_id:
+          type: integer
+          format: uint
+          description: テーマID
+        title:
+          type: string
+          maxLength: 256
+          description: 目標名
+        description:
+          type: string
+          nullable: true
+          description: 説明
+        deadline:
+          type: string
+          format: date
+          nullable: true
+          description: 期限
+      required:
+        - theme_id
+        - title
+
+    GoalUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 256
+          description: 目標名
+        description:
+          type: string
+          nullable: true
+          description: 説明
+        deadline:
+          type: string
+          format: date
+          nullable: true
+          description: 期限
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+            - terminated
+          description: 進捗状況
+
+    DashboardInfo:
+      type: object
+      properties:
+        today_study_time:
+          type: integer
+          format: uint
+          description: 今日の学習時間（分単位）
+        week_study_time:
+          type: integer
+          format: uint
+          description: 今週の学習時間（分単位）
+        total_goal_time:
+          type: integer
+          format: uint
+          description: 目標学習時間合計（分単位）
+        themes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Theme'
+          description: テーマ一覧
+        goals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goal'
+          description: 目標一覧
+        recent_records:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudyRecord'
+          description: 最近の学習記録
+      required:
+        - today_study_time
+        - week_study_time
+        - total_goal_time
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      required:
+        - code
+        - message
+
+paths:
+  /users:
+    get:
+      summary: ユーザー情報取得
+      description: ログイン中のユーザー情報を取得する
+      security:
+        - cookieAuth: []
+      tags:
+        - Users
+      responses:
+        '200':
+          description: ユーザー情報を返す
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: ユーザー新規登録
+      description: ユーザー情報を新規登録する
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignUp'
+      responses:
+        '201':
+          description: ユーザーが作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: ユーザー情報更新
+      description: ログイン中のユーザーの情報を更新する
+      security:
+        - cookieAuth: []
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 256
+                description:
+                  type: string
+                  nullable: true
+                icon_url:
+                  type: string
+                  maxLength: 256
+                  nullable: true
+      responses:
+        '200':
+          description: ユーザー情報が更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /signin:
+    post:
+      summary: サインイン
+      description: メールアドレスとパスワードを検証し、セッションを開始する
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignIn'
+      responses:
+        '200':
+          description: サインインに成功しました
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "session_id=<uuid>; HttpOnly; Secure; SameSite=Lax; Max-Age=86400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: メールアドレスまたはパスワードが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /signout:
+    delete:
+      summary: サインアウト
+      description: セッションを削除し、サインアウトする
+      security:
+        - cookieAuth: []
+      tags:
+        - Authentication
+      responses:
+        '204':
+          description: サインアウトしました
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /dashboard:
+    get:
+      summary: ダッシュボード情報取得
+      description: ダッシュボード画面に表示する情報を取得する
+      security:
+        - cookieAuth: []
+      tags:
+        - Dashboard
+      responses:
+        '200':
+          description: ダッシュボード情報を返す
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardInfo'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /themes:
+    get:
+      summary: テーマ一覧取得
+      description: ログイン中のユーザーの学習テーマ一覧を取得する
+      security:
+        - cookieAuth: []
+      tags:
+        - Themes
+      responses:
+        '200':
+          description: テーマ一覧を返す
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Theme'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: テーマ新規登録
+      description: 学習テーマを新規登録する
+      security:
+        - cookieAuth: []
+      tags:
+        - Themes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThemeCreate'
+      responses:
+        '201':
+          description: テーマが作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Theme'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /themes/{theme_id}:
+    put:
+      summary: テーマ更新
+      description: theme_idで指定した学習テーマの情報を更新する
+      security:
+        - cookieAuth: []
+      tags:
+        - Themes
+      parameters:
+        - name: theme_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThemeUpdate'
+      responses:
+        '200':
+          description: テーマが更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Theme'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: テーマが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: テーマ削除
+      description: theme_idで指定した学習テーマの情報を削除する
+      security:
+        - cookieAuth: []
+      tags:
+        - Themes
+      parameters:
+        - name: theme_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '204':
+          description: テーマが削除されました
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: テーマが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /themes/{theme_id}/studyrecords:
+    get:
+      summary: 学習記録一覧取得
+      description: theme_idに紐づく学習記録を取得する。from,toで取得する期間を指定できる。指定がない場合は全件取得
+      security:
+        - cookieAuth: []
+      tags:
+        - StudyRecords
+      parameters:
+        - name: theme_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: 取得開始日付
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: 取得終了日付
+      responses:
+        '200':
+          description: 学習記録一覧を返す
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudyRecord'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: テーマが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: 学習記録登録
+      description: theme_idで指定したテーマの学習記録を登録する
+      security:
+        - cookieAuth: []
+      tags:
+        - StudyRecords
+      parameters:
+        - name: theme_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyRecordCreate'
+      responses:
+        '201':
+          description: 学習記録が作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyRecord'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: テーマが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /studyrecords/{id}:
+    put:
+      summary: 学習記録更新
+      description: idで指定した学習記録を更新する
+      security:
+        - cookieAuth: []
+      tags:
+        - StudyRecords
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyRecordCreate'
+      responses:
+        '200':
+          description: 学習記録が更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyRecord'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 学習記録が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: 学習記録削除
+      description: idで指定した学習記録を削除する
+      security:
+        - cookieAuth: []
+      tags:
+        - StudyRecords
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '204':
+          description: 学習記録が削除されました
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 学習記録が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /goals:
+    get:
+      summary: 目標一覧取得
+      description: ログイン中のユーザーの目標一覧を取得する
+      security:
+        - cookieAuth: []
+      tags:
+        - Goals
+      responses:
+        '200':
+          description: 目標一覧を返す
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Goal'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: 目標登録
+      description: ユーザーの目標を登録する
+      security:
+        - cookieAuth: []
+      tags:
+        - Goals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalCreate'
+      responses:
+        '201':
+          description: 目標が作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /goals/{id}:
+    put:
+      summary: 目標更新
+      description: idで指定した目標の情報を更新する
+      security:
+        - cookieAuth: []
+      tags:
+        - Goals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalUpdate'
+      responses:
+        '200':
+          description: 目標が更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 目標が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: 目標削除
+      description: idで指定した目標を削除する
+      security:
+        - cookieAuth: []
+      tags:
+        - Goals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '204':
+          description: 目標が削除されました
+        '401':
+          description: 認可が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 目標が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

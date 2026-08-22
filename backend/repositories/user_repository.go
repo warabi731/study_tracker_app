@@ -8,6 +8,7 @@ import (
 type IUserRepository interface {
 	FindById(userId uint) (*models.User, error)
 	Create(newUser models.User) (*models.User, error)
+	Update(user models.User) (*models.User, error)
 }
 
 type UserRepository struct {
@@ -41,4 +42,14 @@ func (r *UserRepository) Create(newUser models.User) (*models.User, error) {
 	r.users = append(r.users, newUser)
 
 	return &newUser, nil
+}
+
+func (r *UserRepository) Update(user models.User) (*models.User, error) {
+	for i, v := range r.users {
+		if v.ID == user.ID {
+			r.users[i] = user
+			return &user, nil
+		}
+	}
+	return nil, errors.New("user not found")
 }

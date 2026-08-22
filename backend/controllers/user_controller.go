@@ -11,6 +11,7 @@ import (
 type IUserController interface {
 	FindById(ctx *gin.Context)
 	Create(ctx *gin.Context)
+	Update(ctx *gin.Context)
 }
 
 type UserController struct {
@@ -52,4 +53,24 @@ func (c *UserController) Create(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{"user": user})
+}
+
+func  (c *UserController) Update(ctx *gin.Context) {
+	// [TODO]id はCookie情報から取得する。一旦はid=1で固定で取得する
+	var userId uint = 1
+
+	var request dto.UpdateUserInput
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := c.service.Update(userId, request)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"user": user})
+	
 }

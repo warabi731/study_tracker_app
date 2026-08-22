@@ -23,6 +23,7 @@ func main() {
 
 	router.GET("/users", user_controller.FindById)
 	router.POST("/users", user_controller.Create)
+	router.PUT("/users", user_controller.Update)
 
 	router.Run() // サーバーを起動(デフォルトポート：8080)
 }

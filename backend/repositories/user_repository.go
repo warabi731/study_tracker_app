@@ -7,6 +7,7 @@ import (
 
 type IUserRepository interface {
 	FindById(userId uint) (*models.User, error)
+	Create(newUser models.User) (*models.User, error)
 }
 
 type UserRepository struct {
@@ -33,4 +34,11 @@ func (r *UserRepository) FindById(userId uint) (*models.User, error) {
 	}
 
 	return nil, errors.New("user not found")
+}
+
+func (r *UserRepository) Create(newUser models.User) (*models.User, error) {
+	newUser.ID = uint(len(r.users) + 1)
+	r.users = append(r.users, newUser)
+
+	return &newUser, nil
 }

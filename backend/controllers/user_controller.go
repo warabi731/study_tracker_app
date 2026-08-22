@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"backend/dto"
 	"backend/services"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 
 type IUserController interface {
 	FindById(ctx *gin.Context)
+	Create(ctx *gin.Context)
 }
 
 type UserController struct {
@@ -33,5 +35,21 @@ func (c *UserController) FindById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "user": user })
+	ctx.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func (c *UserController) Create(ctx *gin.Context) {
+	var request dto.CreateUserInput
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := c.service.Create(request)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"user": user})
 }
